@@ -1,5 +1,5 @@
 [{
-    "modid": "wct",
+    "modid": "wft",
     "name": "Wireless Fluid Terminal",
     "description": "Adds a wireless version of the AE2 fluid terminal",
     "version": "${version}",
