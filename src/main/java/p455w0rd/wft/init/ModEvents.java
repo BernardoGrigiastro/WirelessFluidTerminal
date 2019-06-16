@@ -20,7 +20,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -32,6 +32,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import p455w0rd.ae2wtlib.api.WTApi;
 import p455w0rd.wft.api.IWirelessFluidTerminalItem;
 import p455w0rd.wft.util.WFTUtils;
+import p455w0rdslib.LibGlobals.Mods;
 
 /**
  * @author p455w0rd
@@ -41,44 +42,32 @@ import p455w0rd.wft.util.WFTUtils;
 public class ModEvents {
 
 	@SubscribeEvent
-	public static void onItemRegistryReady(RegistryEvent.Register<Item> event) {
+	public static void onItemRegistryReady(final RegistryEvent.Register<Item> event) {
 		ModItems.register(event.getRegistry());
 	}
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onKeyInput(KeyInputEvent e) {
+	public static void onKeyInput(final KeyInputEvent e) {
 		WFTUtils.handleKeybind();
 	}
 
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public void onMouseEvent(MouseEvent event) {
+	public void onMouseEvent(final MouseEvent event) {
 		WFTUtils.handleKeybind();
 	}
 
-	@SubscribeEvent
-	@SideOnly(Side.CLIENT)
-	public static void onModelBake(ModelBakeEvent event) {
-		ModItems.initModels(event);
-	}
-
-	@SubscribeEvent
-	@SideOnly(Side.CLIENT)
-	public static void onModelRegister(ModelRegistryEvent event) {
-		ModItems.registerTEISRs(event);
-	}
-
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onPickup(EntityItemPickupEvent e) {
+	public static void onPickup(final EntityItemPickupEvent e) {
 		if (e.getEntityPlayer() != null && e.getEntityPlayer() instanceof EntityPlayerMP) {
 			if (!WTApi.instance().getConfig().isOldInfinityMechanicEnabled() && e.getItem().getItem().getItem() == WTApi.instance().getBoosterCard()) {
-				if (WTApi.Integration.Mods.BAUBLES.isLoaded()) {
-					for (Pair<Integer, ItemStack> termPair : WTApi.instance().getBaublesUtility().getAllWTBaubles(e.getEntityPlayer())) {
-						ItemStack wirelessTerminal = termPair.getRight();
+				if (Mods.BAUBLES.isLoaded()) {
+					for (final Pair<Integer, ItemStack> termPair : WTApi.instance().getBaublesUtility().getAllWTBaubles(e.getEntityPlayer())) {
+						final ItemStack wirelessTerminal = termPair.getRight();
 						if (!wirelessTerminal.isEmpty() && WTApi.instance().shouldConsumeBoosters(wirelessTerminal)) {
 							e.setCanceled(true);
-							ItemStack boosters = e.getItem().getItem().copy();
+							final ItemStack boosters = e.getItem().getItem().copy();
 							WTApi.instance().addInfinityBoosters(wirelessTerminal, boosters);
 							WTApi.instance().getNetHandler().sendTo(WTApi.instance().getNetHandler().createInfinityEnergySyncPacket(WTApi.instance().getInfinityEnergy(wirelessTerminal), e.getEntityPlayer().getUniqueID(), true, termPair.getLeft()), (EntityPlayerMP) e.getEntityPlayer());
 							e.getItem().setDead();
@@ -86,12 +75,12 @@ public class ModEvents {
 						}
 					}
 				}
-				for (Pair<Boolean, Pair<Integer, ItemStack>> termPair : WTApi.instance().getAllWirelessTerminalsByType(e.getEntityPlayer(), IWirelessFluidTerminalItem.class)) {
-					ItemStack wirelessTerminal = termPair.getRight().getRight();
-					boolean shouldConsume = WTApi.instance().shouldConsumeBoosters(wirelessTerminal);
+				for (final Pair<Boolean, Pair<Integer, ItemStack>> termPair : WTApi.instance().getAllWirelessTerminalsByType(e.getEntityPlayer(), IWirelessFluidTerminalItem.class)) {
+					final ItemStack wirelessTerminal = termPair.getRight().getRight();
+					final boolean shouldConsume = WTApi.instance().shouldConsumeBoosters(wirelessTerminal);
 					if (!wirelessTerminal.isEmpty() && shouldConsume) {
 						e.setCanceled(true);
-						ItemStack boosters = e.getItem().getItem().copy();
+						final ItemStack boosters = e.getItem().getItem().copy();
 						WTApi.instance().addInfinityBoosters(wirelessTerminal, boosters);
 						WTApi.instance().getNetHandler().sendTo(WTApi.instance().getNetHandler().createInfinityEnergySyncPacket(WTApi.instance().getInfinityEnergy(wirelessTerminal), e.getEntityPlayer().getUniqueID(), true, termPair.getRight().getLeft()), (EntityPlayerMP) e.getEntityPlayer());
 						e.getItem().setDead();

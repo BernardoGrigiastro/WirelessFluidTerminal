@@ -15,12 +15,15 @@
  */
 package p455w0rd.wft.util;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.input.Keyboard;
+
+import com.google.common.collect.Lists;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,13 +35,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import p455w0rd.ae2wtlib.api.ICustomWirelessTerminalItem;
 import p455w0rd.ae2wtlib.api.WTApi;
-import p455w0rd.ae2wtlib.api.WTApi.Integration.Mods;
 import p455w0rd.wft.api.IWirelessFluidTerminalItem;
 import p455w0rd.wft.api.WFTApi;
 import p455w0rd.wft.container.ContainerWFT;
-import p455w0rd.wft.init.ModItems;
 import p455w0rd.wft.init.ModKeybindings;
+import p455w0rdslib.LibGlobals.Mods;
 
 public class WFTUtils {
 
@@ -47,17 +50,17 @@ public class WFTUtils {
 	public static final String IN_RANGE_NBT = "IsInRange";
 	public static final String AUTOCONSUME_BOOSTER_NBT = "AutoConsumeBoosters";
 
-	public static NonNullList<ItemStack> getFluidTerminals(EntityPlayer player) {
-		NonNullList<ItemStack> terminalList = NonNullList.<ItemStack>create();
-		InventoryPlayer playerInventory = player.inventory;
-		for (ItemStack fluidTerm : playerInventory.mainInventory) {
+	public static NonNullList<ItemStack> getFluidTerminals(final EntityPlayer player) {
+		final NonNullList<ItemStack> terminalList = NonNullList.<ItemStack>create();
+		final InventoryPlayer playerInventory = player.inventory;
+		for (final ItemStack fluidTerm : playerInventory.mainInventory) {
 			if (isAnyWFT(fluidTerm)) {
 				terminalList.add(fluidTerm);
 			}
 		}
 		if (Mods.BAUBLES.isLoaded()) {
-			Set<Pair<Integer, ItemStack>> pairSet = WTApi.instance().getBaublesUtility().getAllWTBaublesByType(player, IWirelessFluidTerminalItem.class);
-			for (Pair<Integer, ItemStack> pair : pairSet) {
+			final Set<Pair<Integer, ItemStack>> pairSet = WTApi.instance().getBaublesUtility().getAllWTBaublesByType(player, IWirelessFluidTerminalItem.class);
+			for (final Pair<Integer, ItemStack> pair : pairSet) {
 				terminalList.add(pair.getRight());
 			}
 		}
@@ -65,25 +68,28 @@ public class WFTUtils {
 	}
 
 	@Nonnull
-	public static ItemStack getFluidTerm(InventoryPlayer playerInv) {
-		if (!playerInv.player.getHeldItemMainhand().isEmpty() && playerInv.player.getHeldItemMainhand().getItem() instanceof IWirelessFluidTerminalItem) {
+	public static ItemStack getFluidTerm(final InventoryPlayer playerInv) {
+		if (!playerInv.player.getHeldItemMainhand().isEmpty() && (playerInv.player.getHeldItemMainhand().getItem() instanceof IWirelessFluidTerminalItem || WTApi.instance().getWUTUtility().doesWUTSupportType(playerInv.player.getHeldItemMainhand(), IWirelessFluidTerminalItem.class))) {
 			return playerInv.player.getHeldItemMainhand();
 		}
 		ItemStack fluidTerm = ItemStack.EMPTY;
 		if (Mods.BAUBLES.isLoaded()) {
-			fluidTerm = WTApi.instance().getBaublesUtility().getAllWTBaublesByType(playerInv.player, IWirelessFluidTerminalItem.class).stream().findFirst().get().getRight();
+			final List<Pair<Integer, ItemStack>> baubleList = Lists.newArrayList(WTApi.instance().getBaublesUtility().getAllWTBaublesByType(playerInv.player, IWirelessFluidTerminalItem.class));
+			if (baubleList.size() > 0) {
+				fluidTerm = baubleList.get(0).getRight();
+			}
 		}
 		if (fluidTerm.isEmpty()) {
-			int invSize = playerInv.getSizeInventory();
+			final int invSize = playerInv.getSizeInventory();
 			if (invSize <= 0) {
 				return ItemStack.EMPTY;
 			}
 			for (int i = 0; i < invSize; ++i) {
-				ItemStack item = playerInv.getStackInSlot(i);
+				final ItemStack item = playerInv.getStackInSlot(i);
 				if (item.isEmpty()) {
 					continue;
 				}
-				if (item.getItem() instanceof IWirelessFluidTerminalItem) {
+				if (item.getItem() instanceof IWirelessFluidTerminalItem || WTApi.instance().getWUTUtility().doesWUTSupportType(item, IWirelessFluidTerminalItem.class)) {
 					fluidTerm = item;
 					break;
 				}
@@ -92,37 +98,47 @@ public class WFTUtils {
 		return fluidTerm;
 	}
 
+	public static ItemStack getWFTBySlot(final EntityPlayer player, final int slot) {
+		if (slot >= 0) {
+			return WTApi.instance().getWTBySlot(player, slot, IWirelessFluidTerminalItem.class);
+		}
+		return ItemStack.EMPTY;
+	}
+
 	/**
 	 * gets the first available Wireless Crafting Terminal
 	 * the Integer of the Pair tells the slotNumber
 	 * the boolean tells whether or not the Integer is a Baubles slot
 	 */
 	@Nonnull
-	public static Pair<Boolean, Pair<Integer, ItemStack>> getFirstWirelessFluidTerminal(InventoryPlayer playerInv) {
+	public static Pair<Boolean, Pair<Integer, ItemStack>> getFirstWirelessFluidTerminal(final InventoryPlayer playerInv) {
 		boolean isBauble = false;
 		int slotID = -1;
 		ItemStack wirelessTerm = ItemStack.EMPTY;
-		if (!playerInv.player.getHeldItemMainhand().isEmpty() && playerInv.player.getHeldItemMainhand().getItem() instanceof IWirelessFluidTerminalItem) {
+		if (!playerInv.player.getHeldItemMainhand().isEmpty() && (playerInv.player.getHeldItemMainhand().getItem() instanceof IWirelessFluidTerminalItem || WTApi.instance().getWUTUtility().doesWUTSupportType(playerInv.player.getHeldItemMainhand(), IWirelessFluidTerminalItem.class))) {
 			slotID = playerInv.currentItem;
 			wirelessTerm = playerInv.player.getHeldItemMainhand();
 		}
 		else {
-			if (WTApi.Integration.Mods.BAUBLES.isLoaded()) {
-				wirelessTerm = WTApi.instance().getBaublesUtility().getFirstWTBaubleByType(playerInv.player, IWirelessFluidTerminalItem.class).getRight();
-				slotID = WTApi.instance().getBaublesUtility().getFirstWTBauble(playerInv.player).getLeft();
-				if (!wirelessTerm.isEmpty()) {
-					isBauble = true;
+			if (Mods.BAUBLES.isLoaded()) {
+				final Pair<Integer, ItemStack> bauble = WTApi.instance().getBaublesUtility().getFirstWTBaubleByType(playerInv.player, IWirelessFluidTerminalItem.class);
+				if (!bauble.getRight().isEmpty()) {
+					wirelessTerm = bauble.getRight();
+					slotID = bauble.getLeft();
+					if (!wirelessTerm.isEmpty()) {
+						isBauble = true;
+					}
 				}
 			}
 			if (wirelessTerm.isEmpty()) {
-				int invSize = playerInv.getSizeInventory();
+				final int invSize = playerInv.getSizeInventory();
 				if (invSize > 0) {
 					for (int i = 0; i < invSize; ++i) {
-						ItemStack item = playerInv.getStackInSlot(i);
+						final ItemStack item = playerInv.getStackInSlot(i);
 						if (item.isEmpty()) {
 							continue;
 						}
-						if (item.getItem() instanceof IWirelessFluidTerminalItem) {
+						if (item.getItem() instanceof IWirelessFluidTerminalItem || WTApi.instance().getWUTUtility().doesWUTSupportType(item, IWirelessFluidTerminalItem.class)) {
 							wirelessTerm = item;
 							slotID = i;
 							break;
@@ -134,16 +150,16 @@ public class WFTUtils {
 		return Pair.of(isBauble, Pair.of(slotID, wirelessTerm));
 	}
 
-	public static boolean isAnyWFT(@Nonnull ItemStack wirelessTerm) {
-		return wirelessTerm.getItem() == ModItems.WFT || wirelessTerm.getItem() == ModItems.CREATIVE_WFT || wirelessTerm.getItem() instanceof IWirelessFluidTerminalItem;
+	public static boolean isAnyWFT(@Nonnull final ItemStack fluidTerm) {
+		return fluidTerm.getItem() instanceof IWirelessFluidTerminalItem || WTApi.instance().getWUTUtility().doesWUTSupportType(fluidTerm, IWirelessFluidTerminalItem.class);
 	}
 
-	public static boolean isWFTCreative(ItemStack fluidTerm) {
-		return !fluidTerm.isEmpty() && fluidTerm.getItem() == ModItems.CREATIVE_WFT;
+	public static boolean isWFTCreative(final ItemStack fluidTerm) {
+		return !fluidTerm.isEmpty() && ((ICustomWirelessTerminalItem) fluidTerm.getItem()).isCreative();
 	}
 
 	@SideOnly(Side.CLIENT)
-	public static String color(String color) {
+	public static String color(final String color) {
 		switch (color) {
 		case "white":
 			return TextFormatting.WHITE.toString();
@@ -174,7 +190,7 @@ public class WFTUtils {
 		return Minecraft.getMinecraft().player;
 	}
 
-	public static EntityPlayer player(InventoryPlayer playerInv) {
+	public static EntityPlayer player(final InventoryPlayer playerInv) {
 		return playerInv.player;
 	}
 
@@ -183,29 +199,29 @@ public class WFTUtils {
 		return Minecraft.getMinecraft().world;
 	}
 
-	public static World world(EntityPlayer player) {
+	public static World world(final EntityPlayer player) {
 		return player.getEntityWorld();
 	}
 
-	public static void chatMessage(EntityPlayer player, ITextComponent message) {
+	public static void chatMessage(final EntityPlayer player, final ITextComponent message) {
 		player.sendMessage(message);
 	}
 
 	@SideOnly(Side.CLIENT)
 	public static void handleKeybind() {
-		EntityPlayer p = WFTUtils.player();
+		final EntityPlayer p = WFTUtils.player();
 		if (p.openContainer == null) {
 			return;
 		}
 		if (ModKeybindings.openFluidTerminal.getKeyCode() != Keyboard.CHAR_NONE && ModKeybindings.openFluidTerminal.isPressed()) {
-			ItemStack is = WFTUtils.getFluidTerm(p.inventory);
+			final ItemStack is = WFTUtils.getFluidTerm(p.inventory);
 			if (is.isEmpty()) {
 				return;
 			}
-			IWirelessFluidTerminalItem fluidTerm = (IWirelessFluidTerminalItem) is.getItem();
+			final ICustomWirelessTerminalItem fluidTerm = (ICustomWirelessTerminalItem) is.getItem();
 			if (fluidTerm != null) {
 				if (!(p.openContainer instanceof ContainerWFT)) {
-					Pair<Boolean, Pair<Integer, ItemStack>> wftPair = WFTUtils.getFirstWirelessFluidTerminal(p.inventory);
+					final Pair<Boolean, Pair<Integer, ItemStack>> wftPair = WFTUtils.getFirstWirelessFluidTerminal(p.inventory);
 					WFTApi.instance().openWFTGui(p, wftPair.getLeft(), wftPair.getRight().getLeft());
 					//ModNetworking.instance().sendToServer(new PacketOpenGui(ModGuiHandler.GUI_WFT));
 				}

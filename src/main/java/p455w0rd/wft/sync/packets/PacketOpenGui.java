@@ -18,10 +18,9 @@ package p455w0rd.wft.sync.packets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.ContainerPlayer;
+import p455w0rd.ae2wtlib.api.networking.INetworkInfo;
 import p455w0rd.wft.init.ModGuiHandler;
 import p455w0rd.wft.sync.WFTPacket;
-import p455w0rd.wft.sync.network.INetworkInfo;
 
 public class PacketOpenGui extends WFTPacket {
 
@@ -52,7 +51,7 @@ public class PacketOpenGui extends WFTPacket {
 
 	@Override
 	public void serverPacketData(final INetworkInfo manager, final WFTPacket packet, final EntityPlayer player) {
-		if (player.openContainer instanceof ContainerPlayer && slot >= 0) {
+		if (slot >= 0) {
 			ModGuiHandler.open(whichGui, player, player.getEntityWorld(), player.getPosition(), isBauble, slot);
 		}
 	}

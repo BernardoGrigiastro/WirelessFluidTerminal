@@ -22,8 +22,8 @@ import com.google.common.collect.Lists;
 import mezz.jei.api.*;
 import net.minecraft.item.ItemStack;
 import p455w0rd.ae2wtlib.api.WTApi;
-import p455w0rd.ae2wtlib.api.WTApi.Integration.Mods;
 import p455w0rd.wft.init.ModItems;
+import p455w0rdslib.LibGlobals.Mods;
 
 /**
  * @author p455w0rd
@@ -34,8 +34,8 @@ public class JEI implements IModPlugin {
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public void register(@Nonnull IModRegistry registry) {
-		String wftBaublesDescKey = Mods.BAUBLES.isLoaded() ? WTApi.instance().getConstants().getTooltips().jeiCanBeWorn() : "";
+	public void register(@Nonnull final IModRegistry registry) {
+		final String wftBaublesDescKey = Mods.BAUBLES.isLoaded() ? WTApi.instance().getConstants().getTooltips().jeiCanBeWorn() : "";
 		registry.addIngredientInfo(Lists.newArrayList(new ItemStack(ModItems.WFT)), ItemStack.class, "jei.wft.desc", wftBaublesDescKey);
 	}
 

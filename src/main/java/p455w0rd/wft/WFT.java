@@ -27,7 +27,7 @@ import p455w0rd.wft.proxy.CommonProxy;
  * @author p455w0rd
  *
  */
-@Mod(modid = ModGlobals.MODID, name = ModGlobals.NAME, version = ModGlobals.VERSION, dependencies = ModGlobals.DEP_LIST, acceptedMinecraftVersions = "[1.12.2]")
+@Mod(modid = ModGlobals.MODID, name = ModGlobals.NAME, version = ModGlobals.VERSION, dependencies = ModGlobals.DEP_LIST, acceptedMinecraftVersions = "[1.12.2]", certificateFingerprint = "@FINGERPRINT@")
 public class WFT {
 
 	@SidedProxy(clientSide = ModGlobals.CLIENT_PROXY, serverSide = ModGlobals.SERVER_PROXY)
@@ -37,18 +37,18 @@ public class WFT {
 	public static WFT INSTANCE;
 
 	@EventHandler
-	public void preInit(FMLPreInitializationEvent e) {
+	public void preInit(final FMLPreInitializationEvent e) {
 		INSTANCE = this;
 		PROXY.preInit(e);
 	}
 
 	@EventHandler
-	public void init(FMLInitializationEvent e) {
+	public void init(final FMLInitializationEvent e) {
 		PROXY.init(e);
 	}
 
 	@EventHandler
-	public void postInit(FMLPostInitializationEvent e) {
+	public void postInit(final FMLPostInitializationEvent e) {
 		PROXY.postInit(e);
 	}
 

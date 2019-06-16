@@ -14,9 +14,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
+import p455w0rd.ae2wtlib.api.networking.INetworkInfo;
 import p455w0rd.wft.container.ContainerWFT;
 import p455w0rd.wft.sync.WFTPacket;
-import p455w0rd.wft.sync.network.INetworkInfo;
 
 /**
  * @author p455w0rd

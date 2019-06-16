@@ -19,6 +19,7 @@ import appeng.api.AEApi;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import net.minecraft.item.ItemStack;
 import p455w0rd.ae2wtlib.api.ICustomWirelessTerminalItem;
 
 /**
@@ -28,7 +29,7 @@ import p455w0rd.ae2wtlib.api.ICustomWirelessTerminalItem;
 public interface IWirelessFluidTerminalItem extends ICustomWirelessTerminalItem {
 
 	@Override
-	default IStorageChannel<IAEFluidStack> getStorageChannel() {
+	default IStorageChannel<IAEFluidStack> getStorageChannel(ItemStack wft) {
 		return AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
 	}
 

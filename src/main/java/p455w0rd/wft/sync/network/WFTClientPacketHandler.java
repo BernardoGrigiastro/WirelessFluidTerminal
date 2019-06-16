@@ -21,6 +21,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.PacketThreadUtil;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
+import p455w0rd.ae2wtlib.api.networking.INetworkInfo;
+import p455w0rd.ae2wtlib.api.networking.IPacketHandler;
 import p455w0rd.wft.sync.*;
 
 public class WFTClientPacketHandler extends WFTPacketHandlerBase implements IPacketHandler {
@@ -44,7 +46,7 @@ public class WFTClientPacketHandler extends WFTPacketHandlerBase implements IPac
 
 				@Override
 				public void call(final WFTPacket appEngPacket) {
-					appEngPacket.clientPacketData(manager, appEngPacket, player);
+					appEngPacket.clientPacketData(manager, appEngPacket, Minecraft.getMinecraft().player);
 				}
 			};
 

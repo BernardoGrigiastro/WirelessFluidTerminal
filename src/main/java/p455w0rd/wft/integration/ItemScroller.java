@@ -15,7 +15,7 @@
  */
 package p455w0rd.wft.integration;
 
-import p455w0rd.wft.init.ModIntegration.Mods;
+import p455w0rdslib.LibGlobals.Mods;
 
 /**
  * @author p455w0rd

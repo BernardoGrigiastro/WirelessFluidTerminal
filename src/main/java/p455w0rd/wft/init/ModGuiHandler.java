@@ -46,7 +46,7 @@ public class ModGuiHandler implements IGuiHandler {
 		return isBauble;
 	}
 
-	public static void setIsBauble(boolean value) {
+	public static void setIsBauble(final boolean value) {
 		isBauble = value;
 	}
 
@@ -54,14 +54,14 @@ public class ModGuiHandler implements IGuiHandler {
 		return slot;
 	}
 
-	public static void setSlot(int value) {
+	public static void setSlot(final int value) {
 		slot = value;
 	}
 
 	@Override
-	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
+	public Object getServerGuiElement(final int ID, final EntityPlayer player, final World world, final int x, final int y, final int z) {
 		if (ID == GUI_WFT) {
-			ITerminalHost fluidTerminal = getFluidTerminal(player, world, new BlockPos(x, y, z), isBauble(), getSlot());
+			final ITerminalHost fluidTerminal = getFluidTerminal(player, world, new BlockPos(x, y, z), isBauble(), getSlot());
 			if (fluidTerminal != null) {
 				return new ContainerWFT(player, fluidTerminal, getSlot(), isBauble());
 			}
@@ -70,9 +70,9 @@ public class ModGuiHandler implements IGuiHandler {
 	}
 
 	@Override
-	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
+	public Object getClientGuiElement(final int ID, final EntityPlayer player, final World world, final int x, final int y, final int z) {
 		if (ID == GUI_WFT) {
-			ITerminalHost fluidTerminal = getFluidTerminal(player, world, new BlockPos(x, y, z), isBauble(), getSlot());
+			final ITerminalHost fluidTerminal = getFluidTerminal(player, world, new BlockPos(x, y, z), isBauble(), getSlot());
 			if (fluidTerminal != null) {
 				return new GuiWFT(new ContainerWFT(player, fluidTerminal, getSlot(), isBauble()));
 			}
@@ -81,26 +81,26 @@ public class ModGuiHandler implements IGuiHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	private ITerminalHost getFluidTerminal(EntityPlayer player, World world, BlockPos pos, boolean isBauble, int slot) {
+	private ITerminalHost getFluidTerminal(final EntityPlayer player, final World world, final BlockPos pos, final boolean isBauble, final int slot) {
 		ItemStack wirelessTerminal = ItemStack.EMPTY;
 		if (slot >= 0) {
 			wirelessTerminal = isBauble ? WTApi.instance().getBaublesUtility().getWTBySlot(player, slot, IWirelessFluidTerminalItem.class) : WTApi.instance().getWTBySlot(player, slot);
 		}
 		else {
-			Pair<Boolean, Pair<Integer, ItemStack>> firstTerm = WFTUtils.getFirstWirelessFluidTerminal(player.inventory);
+			final Pair<Boolean, Pair<Integer, ItemStack>> firstTerm = WFTUtils.getFirstWirelessFluidTerminal(player.inventory);
 			wirelessTerminal = firstTerm.getRight().getRight();
 			setSlot(firstTerm.getRight().getLeft());
 			setIsBauble(firstTerm.getLeft());
 		}
-		final ICustomWirelessTermHandler wh = (ICustomWirelessTermHandler) AEApi.instance().registries().wireless().getWirelessTerminalHandler(WFTUtils.getFluidTerm(player.inventory));
+		final ICustomWirelessTerminalItem wh = (ICustomWirelessTerminalItem) AEApi.instance().registries().wireless().getWirelessTerminalHandler(wirelessTerminal);
 		final WTGuiObject<IAEFluidStack> terminal = wh == null ? null : (WTGuiObject<IAEFluidStack>) WTApi.instance().getGUIObject(wh, wirelessTerminal, player);
 		return terminal;
 	}
 
-	public static void open(int ID, EntityPlayer player, World world, BlockPos pos, boolean isBauble, int slot) {
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
+	public static void open(final int ID, final EntityPlayer player, final World world, final BlockPos pos, final boolean isBauble, final int slot) {
+		final int x = pos.getX();
+		final int y = pos.getY();
+		final int z = pos.getZ();
 		setIsBauble(isBauble);
 		setSlot(slot);
 		player.openGui(WFT.INSTANCE, ID, world, x, y, z);

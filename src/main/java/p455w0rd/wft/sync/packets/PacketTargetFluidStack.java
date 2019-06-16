@@ -19,9 +19,9 @@ import appeng.fluids.util.AEFluidStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.entity.player.EntityPlayer;
+import p455w0rd.ae2wtlib.api.networking.INetworkInfo;
 import p455w0rd.wft.container.ContainerWFT;
 import p455w0rd.wft.sync.WFTPacket;
-import p455w0rd.wft.sync.network.INetworkInfo;
 
 /**
  * @author p455w0rd

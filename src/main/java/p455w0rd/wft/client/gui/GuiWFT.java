@@ -4,19 +4,18 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
 
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import appeng.api.config.SearchBoxMode;
 import appeng.api.config.Settings;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.ISortSource;
 import appeng.client.me.*;
-import appeng.core.AELog;
+import appeng.core.AEConfig;
 import appeng.core.localization.GuiText;
 import appeng.fluids.container.slots.IMEFluidSlot;
 import appeng.helpers.InventoryAction;
@@ -37,10 +36,10 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import net.minecraftforge.fml.common.Loader;
 import p455w0rd.ae2wtlib.api.WTApi;
-import p455w0rd.ae2wtlib.api.base.GuiWT;
+import p455w0rd.ae2wtlib.api.client.FluidStackSizeRenderer;
 import p455w0rd.ae2wtlib.api.client.ReadableNumberConverter;
+import p455w0rd.ae2wtlib.api.client.gui.GuiWT;
 import p455w0rd.ae2wtlib.api.client.gui.widgets.*;
-import p455w0rd.wft.api.client.FluidStackSizeRenderer;
 import p455w0rd.wft.container.ContainerWFT;
 import p455w0rd.wft.init.ModGlobals;
 import p455w0rd.wft.init.ModNetworking;
@@ -56,10 +55,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	private final FluidRepo repo;
 	private final IConfigManager configSrc;
 	private final ContainerWFT container;
-	private final int offsetX = 9;
-	private int rows = 5;
-	private int perRow = 9;
-	ItemStack wirelessTerm;
+	private final int rows = 5;
 
 	protected ITerminalHost terminal;
 
@@ -68,12 +64,11 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	private GuiImgButton sortDirBox;
 	private GuiImgButtonBooster autoConsumeBoostersBox;
 
-	public GuiWFT(Container container) {
+	public GuiWFT(final Container container) {
 		super(container);
 		xSize = 185;
 		ySize = 222;
 		terminal = ((ContainerWFT) container).getGuiObject();
-		wirelessTerm = ((ContainerWFT) container).getWirelessTerminal();
 		final GuiScrollbar scrollbar = new GuiScrollbar();
 		this.setScrollBar(scrollbar);
 		repo = new FluidRepo(scrollbar, this);
@@ -82,38 +77,35 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 		this.container.setGui(this);
 	}
 
-	public void setFluidTerminal(ItemStack stack) {
-		wirelessTerm = stack;
-	}
-
 	@Override
 	public void initGui() {
 		mc.player.openContainer = inventorySlots;
 		guiLeft = (width - xSize) / 2;
 		guiTop = (height - ySize) / 2;
 
-		searchField = new GuiMETextField(fontRenderer, guiLeft + Math.max(79, offsetX - 1), guiTop + 4, 90, 12);
+		searchField = new GuiMETextField(fontRenderer, guiLeft + Math.max(79, 8), guiTop + 4, 90, 12);
 		searchField.setEnableBackgroundDrawing(false);
 		searchField.setMaxStringLength(25);
 		searchField.setTextColor(0xFFFFFF);
 		searchField.setSelectionColor(0xFF99FF99);
 		searchField.setVisible(true);
 
-		int offset = guiTop + 5;
+		//int offset = guiTop + 5;
 
 		super.initGui();
-		buttonList.clear();
-		buttonList.add(sortByBox = new GuiImgButton(guiLeft - 18, offset, Settings.SORT_BY, configSrc.getSetting(Settings.SORT_BY)));
-		offset += 20;
 
-		buttonList.add(sortDirBox = new GuiImgButton(guiLeft - 18, offset, Settings.SORT_DIRECTION, configSrc.getSetting(Settings.SORT_DIRECTION)));
+		getButtonPanel().addButton(sortByBox = new GuiImgButton(getButtonPanelXOffset(), getButtonPanelYOffset(), Settings.SORT_BY, configSrc.getSetting(Settings.SORT_BY)));
+		//offset += 20;
+
+		getButtonPanel().addButton(sortDirBox = new GuiImgButton(getButtonPanelXOffset(), getButtonPanelYOffset(), Settings.SORT_DIRECTION, configSrc.getSetting(Settings.SORT_DIRECTION)));
 		if (!WTApi.instance().getConfig().isOldInfinityMechanicEnabled() && !WTApi.instance().isWTCreative(getWirelessTerminal())) {
-			offset += 20;
-			buttonList.add(autoConsumeBoostersBox = new GuiImgButtonBooster(guiLeft - 18, offset, container.getWirelessTerminal()));
+			//offset += 20;
+			getButtonPanel().addButton(autoConsumeBoostersBox = new GuiImgButtonBooster(getButtonPanelXOffset(), getButtonPanelYOffset(), container.getWirelessTerminal()));
 		}
+		getButtonPanel().init(this);
 		for (int y = 0; y < rows; y++) {
-			for (int x = 0; x < perRow; x++) {
-				SlotFluidME slot = new SlotFluidME(new InternalFluidSlotME(repo, x + y * perRow, offsetX - 1 + x * 18, 18 + y * 18));
+			for (int x = 0; x < 9; x++) {
+				final SlotFluidME slot = new SlotFluidME(new InternalFluidSlotME(repo, x + y * 9, 8 + x * 18, 18 + y * 18));
 				getMeFluidSlots().add(slot);
 				inventorySlots.inventorySlots.add(slot);
 			}
@@ -122,23 +114,23 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	}
 
 	@Override
-	public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
+	public void drawFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
 		fontRenderer.drawString(getGuiDisplayName("Fluid Terminal"), 8, 6, 4210752);
 		fontRenderer.drawString(GuiText.inventory.getLocal(), 8, ySize - 100, 4210752);
 
 		String warning = "";
 		if (WTApi.instance().getConfig().isInfinityBoosterCardEnabled() && !WTApi.instance().getConfig().isOldInfinityMechanicEnabled()) {
-			int infinityEnergyAmount = WTApi.instance().getInfinityEnergy(container.getWirelessTerminal());
-			if (WTApi.instance().hasInfiniteRange(wirelessTerm)) {
-				if (!WTApi.instance().isInRangeOfWAP(wirelessTerm, WFTUtils.player())) {
+			final int infinityEnergyAmount = WTApi.instance().getInfinityEnergy(container.getWirelessTerminal());
+			if (WTApi.instance().hasInfiniteRange(getWirelessTerminal())) {
+				if (!WTApi.instance().isInRangeOfWAP(getWirelessTerminal(), WFTUtils.player())) {
 					if (infinityEnergyAmount < WTApi.instance().getConfig().getLowInfinityEnergyWarningAmount()) {
 						warning = TextFormatting.RED + "" + I18n.format(WTApi.instance().getConstants().getTooltips().infinityEnergyLow());
 					}
 				}
 			}
 			if (!WTApi.instance().isWTCreative(getWirelessTerminal()) && isPointInRegion(container.getBoosterSlot().xPos, container.getBoosterSlot().yPos, 16, 16, mouseX, mouseY) && mc.player.inventory.getItemStack().isEmpty()) {
-				String amountColor = infinityEnergyAmount < WTApi.instance().getConfig().getLowInfinityEnergyWarningAmount() ? TextFormatting.RED.toString() : TextFormatting.GREEN.toString();
-				String infinityEnergy = I18n.format(WTApi.instance().getConstants().getTooltips().infinityEnergy()) + ": " + amountColor + "" + (isShiftKeyDown() ? infinityEnergyAmount : ReadableNumberConverter.INSTANCE.toSlimReadableForm(infinityEnergyAmount)) + "" + TextFormatting.GRAY + " " + I18n.format(WTApi.instance().getConstants().getTooltips().units());
+				final String amountColor = infinityEnergyAmount < WTApi.instance().getConfig().getLowInfinityEnergyWarningAmount() ? TextFormatting.RED.toString() : TextFormatting.GREEN.toString();
+				final String infinityEnergy = I18n.format(WTApi.instance().getConstants().getTooltips().infinityEnergy()) + ": " + amountColor + "" + (isShiftKeyDown() ? infinityEnergyAmount : ReadableNumberConverter.INSTANCE.toSlimReadableForm(infinityEnergyAmount)) + "" + TextFormatting.GRAY + " " + I18n.format(WTApi.instance().getConstants().getTooltips().units());
 				drawTooltip(mouseX - offsetX, mouseY - offsetY, infinityEnergy);
 			}
 		}
@@ -150,7 +142,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	}
 
 	@Override
-	public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
+	public void drawBG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
 		final ResourceLocation loc = new ResourceLocation(ModGlobals.MODID, "textures/" + getBackground());
 		mc.getTextureManager().bindTexture(loc);
 
@@ -168,7 +160,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 
 		this.drawTexturedModalRect(offsetX, offsetY + 16 + 6 * 18, 0, 106 - 18 - 18 + 8, x_width, 99 + 77);
 		if (WTApi.instance().getConfig().isInfinityBoosterCardEnabled() && !WTApi.instance().isWTCreative(getWirelessTerminal())) {
-			drawTexturedModalRect(guiLeft + 150, (guiTop + rows * 18) + 18, 237, 237, 19, 19);
+			drawTexturedModalRect(guiLeft + 150, guiTop + rows * 18 + 18, 237, 237, 19, 19);
 		}
 		if (searchField != null) {
 			searchField.drawTextBox();
@@ -190,9 +182,9 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 
 				// Set color for dynamic fluids
 				// Convert int color to RGB
-				float red = (fluid.getColor() >> 16 & 255) / 255.0F;
-				float green = (fluid.getColor() >> 8 & 255) / 255.0F;
-				float blue = (fluid.getColor() & 255) / 255.0F;
+				final float red = (fluid.getColor() >> 16 & 255) / 255.0F;
+				final float green = (fluid.getColor() >> 8 & 255) / 255.0F;
+				final float blue = (fluid.getColor() & 255) / 255.0F;
 				GlStateManager.color(red, green, blue);
 
 				this.drawTexturedModalRect(s.xPos, s.yPos, sprite, 16, 16);
@@ -216,7 +208,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	}
 
 	@Override
-	protected void renderHoveredToolTip(int mouseX, int mouseY) {
+	protected void renderHoveredToolTip(final int mouseX, final int mouseY) {
 		final Slot slot = getSlot(mouseX, mouseY);
 
 		if (slot != null && slot instanceof IMEFluidSlot && slot.isEnabled()) {
@@ -243,7 +235,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	}
 
 	@Override
-	protected void actionPerformed(GuiButton btn) throws IOException {
+	protected void actionPerformed(final GuiButton btn) throws IOException {
 		if (btn instanceof GuiImgButton) {
 			final boolean backwards = Mouse.isButtonDown(1);
 			final GuiImgButton iBtn = (GuiImgButton) btn;
@@ -251,20 +243,14 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 			if (iBtn.getSetting() != Settings.ACTIONS) {
 				final Enum<?> cv = iBtn.getCurrentValue();
 				final Enum<?> next = Platform.rotateEnum(cv, backwards, iBtn.getSetting().getPossibleValues());
-
-				try {
-					ModNetworking.instance().sendToServer(new PacketValueConfig(iBtn.getSetting().name(), next.name()));
-				}
-				catch (final IOException e) {
-					AELog.debug(e);
-				}
-
+				ModNetworking.instance().sendToServer(new PacketValueConfig(iBtn.getSetting().name(), next.name()));
 				iBtn.set(next);
 			}
 		}
 		if (btn == autoConsumeBoostersBox) {
 			autoConsumeBoostersBox.cycleValue();
 		}
+		super.actionPerformed(btn);
 	}
 
 	@Override
@@ -300,27 +286,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	}
 
 	@Override
-	protected void handleMouseClick(Slot slot, int slotIdx, int mouseButton, ClickType clickType) {
-		if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
-			if (enableSpaceClicking()) {
-				IAEItemStack stack = null;
-				if (slot instanceof SlotME) {
-					stack = ((SlotME) slot).getAEStack();
-				}
-
-				int slotNum = getInventorySlots().size();
-
-				if (!(slot instanceof SlotME) && slot != null) {
-					slotNum = slot.slotNumber;
-				}
-
-				((ContainerWFT) inventorySlots).setTargetStack(stack);
-
-				final PacketInventoryAction p = new PacketInventoryAction(InventoryAction.MOVE_REGION, slotNum, 0);
-				ModNetworking.instance().sendToServer(p);
-				return;
-			}
-		}
+	protected void handleMouseClick(final Slot slot, final int slotIdx, final int mouseButton, final ClickType clickType) {
 		if (slot instanceof SlotFluidME) {
 			final SlotFluidME meSlot = (SlotFluidME) slot;
 
@@ -343,14 +309,14 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 			if (clickType == ClickType.QUICK_MOVE) {
 				//EntityPlayer player = Minecraft.getMinecraft().player;
 				if (slot.getHasStack()) {
-					ItemStack stack = slot.getStack();
+					final ItemStack stack = slot.getStack();
 					//boolean isBucket = stack.getItem() == Items.BUCKET || stack.getItem() == Items.WATER_BUCKET || stack.getItem() == Items.LAVA_BUCKET || stack.getItem() == Items.MILK_BUCKET || stack.getItem() == ForgeModContainer.getInstance().universalBucket;
-					IFluidHandlerItem fh = FluidUtil.getFluidHandler(stack);
+					final IFluidHandlerItem fh = FluidUtil.getFluidHandler(stack);
 					if (!stack.isEmpty() && fh != null) {
 						if (fh != null) {
-							IFluidTankProperties props = fh.getTankProperties()[0];
+							final IFluidTankProperties props = fh.getTankProperties()[0];
 							if (props != null) {
-								FluidStack fStack = props.getContents();
+								final FluidStack fStack = props.getContents();
 								if (fStack != null && fStack.amount > 0) {
 									ModNetworking.instance().sendToServer(new PacketInventoryAction(InventoryAction.SHIFT_CLICK, slot.slotNumber, 0));
 								}
@@ -384,7 +350,11 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 
 	@Override
 	protected void mouseClicked(final int xCoord, final int yCoord, final int btn) throws IOException {
-		searchField.mouseClicked(xCoord, yCoord, btn);
+		final Enum<?> searchMode = AEConfig.instance().getConfigManager().getSetting(Settings.SEARCH_MODE);
+
+		if (searchMode != SearchBoxMode.AUTOSEARCH && searchMode != SearchBoxMode.JEI_AUTOSEARCH) {
+			searchField.mouseClicked(xCoord, yCoord, btn);
+		}
 
 		if (btn == 1 && searchField.isMouseIn(xCoord, yCoord)) {
 			searchField.setText("");
@@ -407,7 +377,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 
 	private void setScrollBar() {
 		getScrollBar().setTop(18).setLeft(175).setHeight(rows * 18 - 2);
-		getScrollBar().setRange(0, (repo.size() + perRow - 1) / perRow - rows, Math.max(1, rows / 6));
+		getScrollBar().setRange(0, (repo.size() + 9 - 1) / 9 - rows, Math.max(1, rows / 6));
 	}
 
 	@Override
@@ -426,7 +396,7 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	}
 
 	@Override
-	public void updateSetting(IConfigManager manager, Enum settingName, Enum newValue) {
+	public void updateSetting(final IConfigManager manager, final Enum settingName, final Enum newValue) {
 		if (sortByBox != null) {
 			sortByBox.set(configSrc.getSetting(Settings.SORT_BY));
 		}

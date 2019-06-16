@@ -34,9 +34,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import p455w0rd.ae2wtlib.api.networking.INetworkInfo;
 import p455w0rd.wft.client.gui.GuiWFT;
 import p455w0rd.wft.sync.WFTPacket;
-import p455w0rd.wft.sync.network.INetworkInfo;
 
 /**
  * @author p455w0rd

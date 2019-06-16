@@ -35,7 +35,7 @@ I'm just glad I could help make another person's life better in some way.
 
 ## Downloads
 
-* RV6 version is available on [CurseForge](http://minecraft.curseforge.com/projects/wireless-crafting-terminal) (Soon)
+* RV6 version is available on [CurseForge](http://minecraft.curseforge.com/projects/wireless-fluid-terminal)
 
 ## Installation
 
@@ -73,19 +73,8 @@ To make your item a Wireless Fluid Terminal variant, register like normal with A
 To open the WCT Gui from said item, use
 `WCTApi.instance().openWirelessFluidTerminalGui(EntityPlayer player);`
 
-### Custom Wireless Fluid Terminal
-To make your item a Wireless Fluid Terminal variant, register like normal with AE2 and implement
-`p455w0rd.wft.api.IWirelessFluidTerminalItem`
-
-To open the WFT Gui from said item, use
-`WFTApi.instance().openWirelessFluidTerminalGui(EntityPlayer player);`
-
 ### WFT Configs
-To check if the Infinity Booster Card is enabled in WFT configs, use
-`WFTApi.instance().isInfinityBoosterCardEnabled()`
-
-To check if the old infinite range mechanic option is enabled, use
-`WFTApi.instance().isOldInfinityMechanicEnabled()`
+Configs have been moved to [AE2WTLib](https://github.com/p455w0rd/AE2WirelessTerminalLibrary)
 
 ### Maven
 
