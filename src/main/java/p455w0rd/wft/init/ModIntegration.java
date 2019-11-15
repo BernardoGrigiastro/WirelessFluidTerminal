@@ -26,8 +26,7 @@ import p455w0rdslib.LibGlobals.Mods;
 public class ModIntegration {
 
 	public static void preInit() {
-		WTApi.instance().getWirelessTerminalRegistry().registerWirelessTerminal(ModItems.WFT);
-		WTApi.instance().getWirelessTerminalRegistry().registerWirelessTerminal(ModItems.CREATIVE_WFT);
+		WTApi.instance().getWirelessTerminalRegistry().registerWirelessTerminal(ModItems.WFT, ModItems.CREATIVE_WFT);
 	}
 
 	public static void postInit() {

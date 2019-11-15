@@ -47,7 +47,6 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraftforge.common.ForgeModContainer;
 import net.minecraftforge.fluids.*;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandler;
@@ -341,126 +340,97 @@ public class ContainerWFT extends ContainerWT implements IMEMonitorHandlerReceiv
 			return;
 		}
 		ItemStack held = player.inventory.getItemStack();
-		//if (!held.isEmpty()) {
 		if (held.getCount() > 1) {
-			// only support stacksize 1 for now
 			return;
 		}
 		IFluidHandlerItem fh = FluidUtil.getFluidHandler(held);
 		if (fh == null && !held.isEmpty()) {
-			// only fluid handlers items
 			return;
 		}
-		boolean isBucket = held.getItem() == Items.BUCKET || held.getItem() == Items.WATER_BUCKET || held.getItem() == Items.LAVA_BUCKET || held.getItem() == Items.MILK_BUCKET || held.getItem() == ForgeModContainer.getInstance().universalBucket;
 
 		if ((action == InventoryAction.FILL_ITEM || action == InventoryAction.ROLL_UP) && clientRequestedTargetFluid != null) {
-			final AEFluidStack stack = (AEFluidStack) clientRequestedTargetFluid.copy();
-			final IAEItemStack bucket = AEItemStack.fromItemStack(new ItemStack(Items.BUCKET));
-			final IAEItemStack bucketInSystem = Platform.poweredExtraction(getPowerSource(), getGuiObject().getInventory(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class)), bucket, getActionSource(), Actionable.SIMULATE);
-			if (held.isEmpty()) {
-				if (bucketInSystem != null) {
-					held = bucketInSystem.createItemStack();
-					fh = FluidUtil.getFluidHandler(held);
-					isBucket = true;
-				}
-				else {
-					return;
-				}
-			}
-
-			if (isBucket && stack.getStackSize() < Fluid.BUCKET_VOLUME) { // Although buckets support less than a buckets worth of fluid, it does not display how much it holds
-				return;
-			}
-
-			// Check how much we can store in the item
+			final IAEFluidStack stack = clientRequestedTargetFluid.copy();
 			stack.setStackSize(Integer.MAX_VALUE);
 			int amountAllowed = fh.fill(stack.getFluidStack(), false);
 			if (action == InventoryAction.ROLL_UP) {
 				final IAEFluidStack tmpStack = stack.copy();
 				tmpStack.setStackSize(Fluid.BUCKET_VOLUME);
-				amountAllowed = fh.fill(tmpStack.getFluidStack(), false);;
+				amountAllowed = fh.fill(tmpStack.getFluidStack(), false);
 			}
 			stack.setStackSize(amountAllowed);
-
-			// Check if we can pull out of the system
+			if (held.isEmpty()) {
+				final IAEItemStack bucketInSystem = Platform.poweredExtraction(getPowerSource(), getGuiObject().getInventory(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class)), AEItemStack.fromItemStack(new ItemStack(Items.BUCKET)), getActionSource(), Actionable.SIMULATE);
+				if (bucketInSystem != null) {
+					held = bucketInSystem.createItemStack();
+					fh = FluidUtil.getFluidHandler(held);
+				}
+				else {
+					return;
+				}
+			}
 			final IAEFluidStack canPull = Platform.poweredExtraction(getPowerSource(), monitor, stack, getActionSource(), Actionable.SIMULATE);
-			if (canPull == null || canPull.getStackSize() < 1 || isBucket && canPull.getStackSize() != Fluid.BUCKET_VOLUME) {
-				// Either we couldn't pull out of the system,
-				// or we are using a bucket and can only pull out less than a buckets worth of fluid
+			if (canPull == null || canPull.getStackSize() < 1) {
 				return;
 			}
-
-			// Now actually pull out of the system
+			final int canFill = fh.fill(canPull.getFluidStack(), false);
+			if (canFill == 0) {
+				return;
+			}
+			stack.setStackSize(canFill);
 			final IAEFluidStack pulled = Platform.poweredExtraction(getPowerSource(), monitor, stack, getActionSource());
 			if (pulled == null || pulled.getStackSize() < 1) {
 				return;
 			}
-
-			// Actually fill
-			if ((held.isEmpty() || held.getItem() == Items.BUCKET) && isBucket) {
-				Platform.poweredExtraction(getPowerSource(), getGuiObject().getInventory(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class)), bucket, getActionSource(), Actionable.MODULATE);
-			}
 			fh.fill(pulled.getFluidStack(), true);
-
 			player.inventory.setItemStack(fh.getContainer());
 			updateHeld(player);
 		}
 		else if ((action == InventoryAction.EMPTY_ITEM || action == InventoryAction.ROLL_DOWN) && fh != null) {
-
-			// See how much we can drain from the item
 			final FluidStack extract = fh.drain(action == InventoryAction.ROLL_DOWN ? Fluid.BUCKET_VOLUME : Integer.MAX_VALUE, false);
 			if (extract == null || extract.amount < 1) {
 				return;
 			}
-
-			// Check if we can push into the system
-			final IAEFluidStack notPushed = Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource(), Actionable.SIMULATE);
-			if (isBucket && notPushed != null && notPushed.getStackSize() > 0) {
-				// We can't push enough for the bucket
-				return;
+			final IAEFluidStack notStorable = Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource(), Actionable.SIMULATE);
+			if (notStorable != null && notStorable.getStackSize() > 0) {
+				final int toStore = (int) (extract.amount - notStorable.getStackSize());
+				final FluidStack storable = fh.drain(toStore, false);
+				if (storable == null || storable.amount == 0) {
+					return;
+				}
+				else {
+					extract.amount = storable.amount;
+				}
 			}
-
-			final IAEFluidStack notInserted = Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource());
-			if (notInserted != null && notInserted.getStackSize() > 0) {
-				// Only try to extract the amount we DID insert
-				extract.amount -= Math.toIntExact(notInserted.getStackSize());
-			}
-
-			// Actually drain
-			fh.drain(extract, true);
-
+			final FluidStack drained = fh.drain(extract, true);
+			extract.amount = drained.amount;
+			Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource());
 			player.inventory.setItemStack(fh.getContainer());
 			updateHeld(player);
 		}
-		//}
 		else if (action == InventoryAction.EMPTY_ITEM && fh == null) {
 			if (player.inventory.getItemStack().isEmpty()) {
 				final ItemStack stack = inventorySlots.get(slot).getStack();
 				fh = FluidUtil.getFluidHandler(stack);
 				if (fh != null) {
-
 					final FluidStack extract = fh.drain(Integer.MAX_VALUE, false);
 					if (extract == null || extract.amount < 1) {
 						return;
 					}
-					final IAEFluidStack notPushed = Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource(), Actionable.SIMULATE);
-					if (isBucket && notPushed != null && notPushed.getStackSize() > 0) {
-						// We can't push enough for the bucket
-						return;
+					final IAEFluidStack notStorable = Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource(), Actionable.SIMULATE);
+					if (notStorable != null && notStorable.getStackSize() > 0) {
+						final int toStore = (int) (extract.amount - notStorable.getStackSize());
+						final FluidStack storable = fh.drain(toStore, false);
+						if (storable == null || storable.amount == 0) {
+							return;
+						}
+						else {
+							extract.amount = storable.amount;
+						}
 					}
-
-					final IAEFluidStack notInserted = Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource());
-					if (notInserted != null && notInserted.getStackSize() > 0) {
-						// Only try to extract the amount we DID insert
-						extract.amount -= Math.toIntExact(notInserted.getStackSize());
-					}
-
-					// Actually drain
-					fh.drain(extract, true);
-
+					final FluidStack drained = fh.drain(extract, true);
+					extract.amount = drained.amount;
+					Platform.poweredInsert(getPowerSource(), monitor, AEFluidStack.fromFluidStack(extract), getActionSource());
 					inventorySlots.get(slot).putStack(fh.getContainer());
-					//player.inventory.setItemStack(fh.getContainer());
-					//updateHeld(player);
 				}
 			}
 		}

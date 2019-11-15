@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import javax.annotation.Nullable;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 
 public abstract class WFTApi {
 
@@ -30,11 +29,11 @@ public abstract class WFTApi {
 	public static WFTApi instance() {
 		if (WFTApi.api == null) {
 			try {
-				Class<?> clazz = Class.forName("p455w0rd.wft.init.ModAPIImpl");
-				Method instanceAccessor = clazz.getMethod("instance");
+				final Class<?> clazz = Class.forName("p455w0rd.wft.init.ModAPIImpl");
+				final Method instanceAccessor = clazz.getMethod("instance");
 				WFTApi.api = (WFTApi) instanceAccessor.invoke(null);
 			}
-			catch (Throwable e) {
+			catch (final Throwable e) {
 				return null;
 			}
 		}
@@ -43,7 +42,5 @@ public abstract class WFTApi {
 	}
 
 	public abstract void openWFTGui(EntityPlayer player, boolean isBauble, int wftSlot);
-
-	public abstract boolean isTerminalLinked(ItemStack wirelessTerminalItemstack);
 
 }
