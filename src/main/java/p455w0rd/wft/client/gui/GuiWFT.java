@@ -51,6 +51,8 @@ import yalter.mousetweaks.api.MouseTweaksIgnore;
 @MouseTweaksIgnore
 public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 
+	private static final ResourceLocation BACKGROUND = new ResourceLocation(ModGlobals.MODID, "textures/gui/fluid.png");
+
 	private final List<SlotFluidME> meFluidSlots = new LinkedList<>();
 	private final FluidRepo repo;
 	private final IConfigManager configSrc;
@@ -143,21 +145,16 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 
 	@Override
 	public void drawBG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
-		final ResourceLocation loc = new ResourceLocation(ModGlobals.MODID, "textures/" + getBackground());
-		mc.getTextureManager().bindTexture(loc);
-
+		mc.getTextureManager().bindTexture(BACKGROUND);
 		final int x_width = 197;
 		this.drawTexturedModalRect(offsetX, offsetY, 0, 0, x_width, 18);
-
 		for (int x = 0; x < 5; x++) {
 			this.drawTexturedModalRect(offsetX, offsetY + 18 + x * 18, 0, 18, x_width, 18);
 		}
-
 		this.drawTexturedModalRect(offsetX, offsetY + 16 + 6 * 18 - 18, 0, 106 - 18 - 18, x_width, 8);
 		this.drawTexturedModalRect(offsetX, offsetY + 16 + 6 * 18 - 10, 0, 106 - 18 - 18 + 8, x_width, 7);
 		this.drawTexturedModalRect(offsetX, offsetY + 16 + 6 * 18 - 3, 0, 106 - 18 - 18 + 8, x_width, 7);
 		//this.drawTexturedModalRect(offsetX, offsetY + 16 + 6 * 18 + 4, 0, 106 - 18 - 18 + 8, x_width, 3);
-
 		this.drawTexturedModalRect(offsetX, offsetY + 16 + 6 * 18, 0, 106 - 18 - 18 + 8, x_width, 99 + 77);
 		if (WTApi.instance().getConfig().isInfinityBoosterCardEnabled() && !WTApi.instance().isWTCreative(getWirelessTerminal())) {
 			drawTexturedModalRect(guiLeft + 150, guiTop + rows * 18 + 18, 237, 237, 19, 19);
@@ -413,10 +410,6 @@ public class GuiWFT extends GuiWT implements ISortSource, IConfigManagerHost {
 	@Override
 	protected boolean isPowered() {
 		return repo.hasPower();
-	}
-
-	protected String getBackground() {
-		return "gui/fluid.png";
 	}
 
 }
